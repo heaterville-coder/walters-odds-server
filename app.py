@@ -10,46 +10,45 @@ BASE = 'https://api.the-odds-api.com/v4'
 
 @app.route('/mlb')
 def mlb():
-    r = requests.get(f'{BASE}/sports/baseball_mlb/odds', params={
-        'apiKey': API_KEY,
-        'regions': 'us',
-        'markets': 'h2h,spreads,totals',
-        'oddsFormat': 'american',
-        'bookmakers': 'draftkings,fanduel'
-    })
+    r = requests.get(
+        BASE + '/sports/baseball_mlb/odds',
+        params={
+            'apiKey': API_KEY,
+            'regions': 'us',
+            'markets': 'h2h,spreads,totals',
+            'oddsFormat': 'american',
+            'bookmakers': 'draftkings,fanduel'
+        }
+    )
     return jsonify(r.json())
 
 @app.route('/nba')
 def nba():
-    r = requests.get(f'{BASE}/sports/basketball_nba/odds', params={
-        'apiKey': API_KEY,
-        'regions': 'us',
-        'markets': 'h2h,spreads,totals',
-        'oddsFormat': 'american',
-        'bookmakers': 'draftkings,fanduel'
-    })
+    r = requests.get(
+        BASE + '/sports/basketball_nba/odds',
+        params={
+            'apiKey': API_KEY,
+            'regions': 'us',
+            'markets': 'h2h,spreads,totals',
+            'oddsFormat': 'american',
+            'bookmakers': 'draftkings,fanduel'
+        }
+    )
     return jsonify(r.json())
 
 @app.route('/nhl')
 def nhl():
-    r = requests.get(f'{BASE}/sports/icehockey_nhl/odds', params={
-        'apiKey': API_KEY,
-        'regions': 'us',
-        'markets': 'h2h,spreads,totals',
-        'oddsFormat': 'american',
-        'bookmakers': 'draftkings,fanduel'
-    })
+    r = requests.get(
+        BASE + '/sports/icehockey_nhl/odds',
+        params={
+            'apiKey': API_KEY,
+            'regions': 'us',
+            'markets': 'h2h,spreads,totals',
+            'oddsFormat': 'american',
+            'bookmakers': 'draftkings,fanduel'
+        }
+    )
     return jsonify(r.json())
 
 if __name__ == '__main__':
     app.run()
-```
-
-4. Click **"Add file"** at the bottom
-5. Name the new file: `requirements.txt`
-6. Paste this:
-```
-flask
-flask-cors
-requests
-gunicorn
