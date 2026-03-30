@@ -463,9 +463,12 @@ function buildLine(g){
 function scoreBadge(g){
   var k=skey(g.away_team,g.home_team),sc=smap[k];
   if(!sc)return'<div class="game-time">'+fmtT(g.commence_time)+"</div>";
-  var live=sc.status==="inprogress",fin=sc.status==="closed"||sc.status==="complete";
+  var live=sc.status==="inprogress";
+  var fin=sc.completed===true||sc.status==="closed"||sc.status==="complete";
   if(!live&&!fin)return'<div class="game-time">'+fmtT(g.commence_time)+"</div>";
-  var scores=sc.scores||{},asc=scores[sc.away_team]!=null?scores[sc.away_team]:"?",hsc=scores[sc.home_team]!=null?scores[sc.home_team]:"?";
+  var asc="?",hsc="?";
+  if(Array.isArray(sc.scores)){sc.scores.forEach(function(s){if(s.name===sc.away_team)asc=s.score;if(s.name===sc.home_team)hsc=s.score;});}
+  else if(sc.scores){asc=sc.scores[sc.away_team]||"?";hsc=sc.scores[sc.home_team]||"?";}
   var lbl=fin?"Final":(sc.period||"Live"),cls=live?'score-badge is-live':'score-badge',dot=live?'<div class="live-dot"></div>':"";
   return'<div class="'+cls+'">'+dot+'<span class="score-num">'+asc+" - "+hsc+'</span><span class="score-lbl">'+lbl+"</span></div>";
 }
