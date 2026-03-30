@@ -452,7 +452,7 @@ function fmtT(iso){try{return new Date(iso).toLocaleTimeString("en-US",{hour:"nu
 function getO(os,n){if(!os)return null;for(var i=0;i<os.length;i++)if(os[i].name===n)return os[i];return null;}
 function getMkt(bks,k){if(!bks)return null;for(var i=0;i<bks.length;i++){var b=bks[i];if(!b.markets)continue;for(var j=0;j<b.markets.length;j++){var m=b.markets[j];if(m.key===k&&m.outcomes&&m.outcomes.length)return m;}}return null;}
 function sN(n){var p=n.split(" ");return p[p.length-1];}
-function skey(a,h){return(a+"_"+h).toLowerCase().replace(/\\s+/g,"");}
+function skey(a,h){return(a+"_"+h).toLowerCase().replace(/ /g,"").replace(/_/g,"");}
 function buildLine(g){
   var ml=getMkt(g.bookmakers,"h2h"),sp=getMkt(g.bookmakers,"spreads"),tot=getMkt(g.bookmakers,"totals");
   var aML=ml?getO(ml.outcomes,g.away_team):null,hML=ml?getO(ml.outcomes,g.home_team):null;
@@ -477,7 +477,14 @@ function renderGames(odds,scores){
   if(Array.isArray(scores))scores.forEach(function(sc){smap[skey(sc.away_team,sc.home_team)]=sc;});
   var el=document.getElementById("games-container");
   var now=new Date(),cut=new Date(now.getTime()+40*3600000);
-  var up=odds.filter(function(g){var t=new Date(g.commence_time);return t>=new Date(now.getTime()-7200000)&&t<=cut;});
+  var seen={};
+  var up=[];
+  odds.forEach(function(g){
+    var t=new Date(g.commence_time);
+    if(t<new Date(now.getTime()-7200000)||t>cut)return;
+    var k=skey(g.away_team,g.home_team);
+    if(!seen[k]){seen[k]=true;up.push(g);}
+  });
   up.sort(function(a,b){return new Date(a.commence_time)-new Date(b.commence_time);});
   gamesList=up;
   document.getElementById("game-count").textContent=up.length+" games";
