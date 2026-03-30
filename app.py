@@ -286,6 +286,7 @@ DASHBOARD = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Walters Odds Dashboard</title>
 <style>
@@ -467,14 +468,27 @@ function scoreBadge(g){
   var fin=sc.completed===true||sc.status==="closed"||sc.status==="complete";
   if(!live&&!fin)return'<div class="game-time">'+fmtT(g.commence_time)+"</div>";
   var asc="?",hsc="?";
-  if(Array.isArray(sc.scores)){sc.scores.forEach(function(s){if(s.name===sc.away_team)asc=s.score;if(s.name===sc.home_team)hsc=s.score;});}
-  else if(sc.scores){asc=sc.scores[sc.away_team]||"?";hsc=sc.scores[sc.home_team]||"?";}
+  if(Array.isArray(sc.scores)){
+    sc.scores.forEach(function(s){if(s.name===sc.away_team)asc=s.score;if(s.name===sc.home_team)hsc=s.score;});
+  } else if(sc.score){
+    var at=sc.teams&&sc.teams[sc.away_team]?sc.teams[sc.away_team].abbreviation:sc.away_team;
+    var ht=sc.teams&&sc.teams[sc.home_team]?sc.teams[sc.home_team].abbreviation:sc.home_team;
+    asc=sc.score[at]!=null?sc.score[at]:(sc.score[sc.away_team]!=null?sc.score[sc.away_team]:"?");
+    hsc=sc.score[ht]!=null?sc.score[ht]:(sc.score[sc.home_team]!=null?sc.score[sc.home_team]:"?");
+  } else if(sc.scores){
+    asc=sc.scores[sc.away_team]||"?";hsc=sc.scores[sc.home_team]||"?";
+  }
   var lbl=fin?"Final":(sc.period||"Live"),cls=live?'score-badge is-live':'score-badge',dot=live?'<div class="live-dot"></div>':"";
   return'<div class="'+cls+'">'+dot+'<span class="score-num">'+asc+" - "+hsc+'</span><span class="score-lbl">'+lbl+"</span></div>";
 }
 function renderGames(odds,scores){
   smap={};
-  if(Array.isArray(scores))scores.forEach(function(sc){smap[skey(sc.away_team,sc.home_team)]=sc;});
+  if(Array.isArray(scores))scores.forEach(function(sc){
+    smap[skey(sc.away_team,sc.home_team)]=sc;
+    var at=sc.teams&&sc.teams[sc.away_team]?sc.teams[sc.away_team].abbreviation:null;
+    var ht=sc.teams&&sc.teams[sc.home_team]?sc.teams[sc.home_team].abbreviation:null;
+    if(at&&ht)smap[skey(at,ht)]=sc;
+  });
   var el=document.getElementById("games-container");
   var now=new Date(),cut=new Date(now.getTime()+40*3600000);
   var seen={};
@@ -640,7 +654,9 @@ loadOdds();
 
 @app.route('/')
 def dashboard():
-    return Response(DASHBOARD, mimetype='text/html')
+    resp = Response(DASHBOARD, mimetype='text/html')
+    resp.headers['Content-Security-Policy'] = "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;"
+    return resp
 
 if __name__ == '__main__':
     app.run()
