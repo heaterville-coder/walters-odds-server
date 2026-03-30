@@ -488,7 +488,7 @@ function renderGames(odds,scores){
     var ov=tot?getO(tot.outcomes,"Over"):null,un=tot?getO(tot.outcomes,"Under"):null;
     var af=aML&&aML.price<0,hf=hML&&hML.price<0;
     var k=skey(g.away_team,g.home_team),isLive=smap[k]&&smap[k].status==="inprogress";
-    h+='<div class="game-card'+(isLive?" is-live":")+'">';
+    h+='<div class="game-card'+(isLive?' is-live':'')+'">';
     h+='<div class="game-header"><div class="matchup">'+g.away_team+' <span style="color:var(--dim)">@</span> '+g.home_team+"</div><div>"+scoreBadge(g)+"</div></div>";
     h+='<div class="odds-row">';
     h+='<div class="odds-col"><div class="col-label">Away ML</div><div class="team-line"><span class="team-label">'+as+'</span><span class="price '+(af?"fav":"dog")+'">'+( aML?fmt(aML.price):"-")+"</span></div></div>";
