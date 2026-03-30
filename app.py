@@ -167,21 +167,111 @@ def nhl():
 
 @app.route('/mlb-scores')
 def mlb_scores():
-    r = requests.get(ODDS_BASE + '/sports/baseball_mlb/scores',
-        params={'apiKey': ODDS_KEY, 'daysFrom': 2})
-    return jsonify(r.json())
+    try:
+        r = requests.get(
+            'https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard',
+            timeout=10
+        )
+        data = r.json()
+        games = []
+        for event in data.get('events', []):
+            comp = event.get('competitions', [{}])[0]
+            competitors = comp.get('competitors', [])
+            if len(competitors) < 2:
+                continue
+            home = next((c for c in competitors if c.get('homeAway') == 'home'), competitors[0])
+            away = next((c for c in competitors if c.get('homeAway') == 'away'), competitors[1])
+            status = comp.get('status', {})
+            state = status.get('type', {}).get('state', 'pre')
+            completed = status.get('type', {}).get('completed', False)
+            period = status.get('type', {}).get('shortDetail', '')
+            games.append({
+                'away_team': away.get('team', {}).get('displayName', ''),
+                'home_team': home.get('team', {}).get('displayName', ''),
+                'away_abbr': away.get('team', {}).get('abbreviation', ''),
+                'home_abbr': home.get('team', {}).get('abbreviation', ''),
+                'away_score': away.get('score', '0'),
+                'home_score': home.get('score', '0'),
+                'status': 'inprogress' if state == 'in' else ('closed' if completed else 'scheduled'),
+                'completed': completed,
+                'period': period,
+                'commence_time': event.get('date', '')
+            })
+        return jsonify(games)
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 @app.route('/nba-scores')
 def nba_scores():
-    r = requests.get(ODDS_BASE + '/sports/basketball_nba/scores',
-        params={'apiKey': ODDS_KEY, 'daysFrom': 2})
-    return jsonify(r.json())
+    try:
+        r = requests.get(
+            'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard',
+            timeout=10
+        )
+        data = r.json()
+        games = []
+        for event in data.get('events', []):
+            comp = event.get('competitions', [{}])[0]
+            competitors = comp.get('competitors', [])
+            if len(competitors) < 2:
+                continue
+            home = next((c for c in competitors if c.get('homeAway') == 'home'), competitors[0])
+            away = next((c for c in competitors if c.get('homeAway') == 'away'), competitors[1])
+            status = comp.get('status', {})
+            state = status.get('type', {}).get('state', 'pre')
+            completed = status.get('type', {}).get('completed', False)
+            period = status.get('type', {}).get('shortDetail', '')
+            games.append({
+                'away_team': away.get('team', {}).get('displayName', ''),
+                'home_team': home.get('team', {}).get('displayName', ''),
+                'away_abbr': away.get('team', {}).get('abbreviation', ''),
+                'home_abbr': home.get('team', {}).get('abbreviation', ''),
+                'away_score': away.get('score', '0'),
+                'home_score': home.get('score', '0'),
+                'status': 'inprogress' if state == 'in' else ('closed' if completed else 'scheduled'),
+                'completed': completed,
+                'period': period,
+                'commence_time': event.get('date', '')
+            })
+        return jsonify(games)
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 @app.route('/nhl-scores')
 def nhl_scores():
-    r = requests.get(ODDS_BASE + '/sports/icehockey_nhl/scores',
-        params={'apiKey': ODDS_KEY, 'daysFrom': 2})
-    return jsonify(r.json())
+    try:
+        r = requests.get(
+            'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard',
+            timeout=10
+        )
+        data = r.json()
+        games = []
+        for event in data.get('events', []):
+            comp = event.get('competitions', [{}])[0]
+            competitors = comp.get('competitors', [])
+            if len(competitors) < 2:
+                continue
+            home = next((c for c in competitors if c.get('homeAway') == 'home'), competitors[0])
+            away = next((c for c in competitors if c.get('homeAway') == 'away'), competitors[1])
+            status = comp.get('status', {})
+            state = status.get('type', {}).get('state', 'pre')
+            completed = status.get('type', {}).get('completed', False)
+            period = status.get('type', {}).get('shortDetail', '')
+            games.append({
+                'away_team': away.get('team', {}).get('displayName', ''),
+                'home_team': home.get('team', {}).get('displayName', ''),
+                'away_abbr': away.get('team', {}).get('abbreviation', ''),
+                'home_abbr': home.get('team', {}).get('abbreviation', ''),
+                'away_score': away.get('score', '0'),
+                'home_score': home.get('score', '0'),
+                'status': 'inprogress' if state == 'in' else ('closed' if completed else 'scheduled'),
+                'completed': completed,
+                'period': period,
+                'commence_time': event.get('date', '')
+            })
+        return jsonify(games)
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 def try_nba_pdf(date_str, time_str):
     url = 'https://ak-static.cms.nba.com/referee/injury/Injury-Report_' + date_str + '_' + time_str + '.pdf'
@@ -463,31 +553,24 @@ function buildLine(g){
 }
 function scoreBadge(g){
   var k=skey(g.away_team,g.home_team),sc=smap[k];
+  if(!sc){
+    var parts=g.away_team.split(" "),awayAbbr=parts[parts.length-1];
+    parts=g.home_team.split(" ");var homeAbbr=parts[parts.length-1];
+    sc=smap[skey(awayAbbr,homeAbbr)];
+  }
   if(!sc)return'<div class="game-time">'+fmtT(g.commence_time)+"</div>";
   var live=sc.status==="inprogress";
   var fin=sc.completed===true||sc.status==="closed"||sc.status==="complete";
   if(!live&&!fin)return'<div class="game-time">'+fmtT(g.commence_time)+"</div>";
-  var asc="?",hsc="?";
-  if(Array.isArray(sc.scores)){
-    sc.scores.forEach(function(s){if(s.name===sc.away_team)asc=s.score;if(s.name===sc.home_team)hsc=s.score;});
-  } else if(sc.score){
-    var at=sc.teams&&sc.teams[sc.away_team]?sc.teams[sc.away_team].abbreviation:sc.away_team;
-    var ht=sc.teams&&sc.teams[sc.home_team]?sc.teams[sc.home_team].abbreviation:sc.home_team;
-    asc=sc.score[at]!=null?sc.score[at]:(sc.score[sc.away_team]!=null?sc.score[sc.away_team]:"?");
-    hsc=sc.score[ht]!=null?sc.score[ht]:(sc.score[sc.home_team]!=null?sc.score[sc.home_team]:"?");
-  } else if(sc.scores){
-    asc=sc.scores[sc.away_team]||"?";hsc=sc.scores[sc.home_team]||"?";
-  }
+  var asc=sc.away_score||"0",hsc=sc.home_score||"0";
   var lbl=fin?"Final":(sc.period||"Live"),cls=live?'score-badge is-live':'score-badge',dot=live?'<div class="live-dot"></div>':"";
   return'<div class="'+cls+'">'+dot+'<span class="score-num">'+asc+" - "+hsc+'</span><span class="score-lbl">'+lbl+"</span></div>";
 }
 function renderGames(odds,scores){
   smap={};
   if(Array.isArray(scores))scores.forEach(function(sc){
-    smap[skey(sc.away_team,sc.home_team)]=sc;
-    var at=sc.teams&&sc.teams[sc.away_team]?sc.teams[sc.away_team].abbreviation:null;
-    var ht=sc.teams&&sc.teams[sc.home_team]?sc.teams[sc.home_team].abbreviation:null;
-    if(at&&ht)smap[skey(at,ht)]=sc;
+    if(sc.away_team&&sc.home_team)smap[skey(sc.away_team,sc.home_team)]=sc;
+    if(sc.away_abbr&&sc.home_abbr)smap[skey(sc.away_abbr,sc.home_abbr)]=sc;
   });
   var el=document.getElementById("games-container");
   var now=new Date(),cut=new Date(now.getTime()+40*3600000);
